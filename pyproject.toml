@@ -1,0 +1,62 @@
+[project]
+name = "debleeder"
+version = "0.2.1-alpha"
+description = "Nightmare Debleeder Dreamcleaner — document bleed detection with human-in-the-loop safety"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [{name = "Debleeder Project"}]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Text Processing :: Linguistic",
+]
+
+# Termux constraint: pure-Python wheels only. No C extensions in the core.
+dependencies = [
+    "openpyxl>=3.1.0",
+    "pypdf>=4.0.0",
+    "python-docx>=1.1.0",
+    "pyyaml>=6.0.0",
+    "typer>=0.9.0",
+]
+
+[project.optional-dependencies]
+desktop = [
+    "pymupdf>=1.23.0",
+    "plotly>=5.18.0",
+]
+dev = [
+    "pytest>=7.4.0",
+    "ruff>=0.1.0",
+    "coverage>=7.4.0",
+]
+
+[project.scripts]
+debleeder = "debleeder.cli.main:app"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"debleeder.gui" = ["templates/*.html"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "experiment: provisional calibration experiments, not doctrine gates",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"

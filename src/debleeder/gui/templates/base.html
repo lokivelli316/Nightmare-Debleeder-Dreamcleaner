@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} — Debleeder</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xL+l8nOYcn" crossorigin="anonymous"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 1rem; line-height: 1.5; }
+        .container { max-width: 100%; margin: 0 auto; }
+        .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin: 1rem 0; background: white; }
+        .badge { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+        .badge-high { background: #fee; color: #c00; border: 1px solid #fcc; }
+        .badge-medium { background: #ffe; color: #c80; border: 1px solid #ffc; }
+        .badge-low { background: #eef; color: #00c; border: 1px solid #ccf; }
+        .badge-none { background: #eee; color: #666; border: 1px solid #ddd; }
+        .btn { display: inline-block; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; margin: 0.25rem; min-height: 44px; min-width: 44px; }
+        .btn-primary { background: #0066cc; color: white; }
+        .btn-danger { background: #cc0000; color: white; }
+        .btn-warning { background: #cc8800; color: white; }
+        .btn-secondary { background: #666; color: white; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .evidence-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .evidence-pane { border: 1px solid #eee; border-radius: 4px; padding: 0.5rem; max-height: 300px; overflow: auto; }
+        .progress { width: 100%; height: 8px; background: #eee; border-radius: 4px; overflow: hidden; }
+        .progress-bar { height: 100%; background: #0066cc; transition: width 0.3s; }
+        @media (max-width: 600px) {
+            .evidence-row { grid-template-columns: 1fr; }
+            .btn { width: 100%; margin: 0.5rem 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header style="margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">
+            <h1 style="margin: 0; font-size: 1.2rem;">🧟 Debleeder</h1>
+            <div style="font-size: 0.8rem; color: #666;">Run: {{ run_id }} | Stage: {{ stage }}</div>
+        </header>
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+        <footer style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #eee; font-size: 0.8rem; color: #666;">
+            <a href="/">Home</a> | <a href="/run/{{ run_id }}">Run Overview</a>
+        </footer>
+    </div>
+</body>
+</html>

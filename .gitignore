@@ -1,0 +1,18 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+build/
+dist/
+.venv/
+venv/
+
+# Runtime state — never commit a project's operational data
+.debleeder/
+exports/
+imports/
+references/
+*.sqlite
+*.sqlite3
+audit.jsonl

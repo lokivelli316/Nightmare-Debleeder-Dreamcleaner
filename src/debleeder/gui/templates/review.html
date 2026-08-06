@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h2>Review Block</h2>
+    <div style="font-family: monospace; font-size: 0.9rem; white-space: pre-wrap; background: #fafafa; padding: 1rem; border-radius: 4px; max-height: 400px; overflow: auto;">
+{{ reference_banner }}
+{{ block_content }}
+    </div>
+    <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #666;">
+        CID: {{ block_cid }} | Ordinal: {{ ordinal }} | Quality: {{ extraction_quality }}
+    </div>
+</div>
+
+{% if pair_id %}
+<div class="card">
+    <h3>Evidence — <span class="badge badge-{{ strength }}">{{ strength }}</span> / <span class="badge badge-{{ confidence }}">{{ confidence }}</span></h3>
+    <div class="evidence-row">
+        <div class="evidence-pane">
+            <strong>Target (this block)</strong>
+            <pre style="white-space: pre-wrap; font-size: 0.8rem;">{{ target_content }}</pre>
+        </div>
+        <div class="evidence-pane">
+            <strong>Source</strong>
+            <pre style="white-space: pre-wrap; font-size: 0.8rem;">{{ source_content }}</pre>
+        </div>
+    </div>
+    <details style="margin-top: 0.5rem;">
+        <summary>Channel Details</summary>
+        <pre style="font-size: 0.7rem; background: #f5f5f5; padding: 0.5rem;">{{ channel_details }}</pre>
+    </details>
+</div>
+{% endif %}
+
+<div class="card">
+    <h3>Disposition</h3>
+    <form hx-post="/decide/{{ run_id }}/{{ block_cid }}" hx-target="#decision-result" hx-swap="innerHTML">
+        <input type="hidden" name="reason" id="reason-input" value="">
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <button type="submit" name="disposition" value="keep" class="btn btn-primary" onclick="this.form.reason.value='Retained as original'">✅ Keep</button>
+            <button type="submit" name="disposition" value="keep_seeded" class="btn btn-secondary" onclick="this.form.reason.value='Matches seeded material'">🌱 Keep Seeded</button>
+            <button type="submit" name="disposition" value="rewrite" class="btn btn-warning" onclick="this.form.reason.value='Human rewrite required'">✏️ Rewrite</button>
+            <button type="submit" name="disposition" value="review" class="btn btn-secondary" onclick="this.form.reason.value='Needs further review'">👁️ Review</button>
+            <button type="submit" name="disposition" value="quarantine" class="btn btn-warning" onclick="this.form.reason.value='Quarantined - removed from clean copy'">🔒 Quarantine</button>
+            <button type="submit" name="disposition" value="shred" class="btn btn-danger" onclick="this.form.reason.value='Shredded - hidden but recoverable'">🗑️ Shred</button>
+            <button type="submit" name="disposition" value="purge" class="btn btn-danger" onclick="this.form.reason.value='Purged - irreversible'">💀 Purge</button>
+        </div>
+        <textarea name="reason" id="reason-input" placeholder="Required reason..." style="width: 100%; min-height: 60px; margin-bottom: 0.5rem;"></textarea>
+        <div id="decision-result"></div>
+    </form>
+</div>
+
+<script>
+    // Prevent accidental double-submit
+    document.querySelectorAll('form[hx-post]').forEach(form => {
+        form.addEventListener('htmx:beforeRequest', () => {
+            form.querySelectorAll('button').forEach(btn => btn.disabled = true);
+        });
+        form.addEventListener('htmx:afterRequest', () => {
+            form.querySelectorAll('button').forEach(btn => btn.disabled = false);
+        });
+    });
+</script>
+{% endblock %}
