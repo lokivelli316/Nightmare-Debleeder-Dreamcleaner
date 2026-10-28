@@ -256,6 +256,15 @@ class DebleederCore:
             if not ref_ev or ref_ev.details.get("match_type") != "reference_difference":
                 continue
 
+            # Correction authority must match triage authority. A declared
+            # reference can surface a weak seam for inspection without granting
+            # it permission to become a PROPOSED correction. Reuse the triage
+            # gate here so suggestion generation cannot drift looser than the
+            # user-visible classification.
+            triaged = self.triage.triage_pair(pair_id, evidence)
+            if not triaged.reference_disagreement:
+                continue
+
             working = self.store.get_block(run_id, ref_ev.details["working_instance_id"])
             reference = self.store.get_block(run_id, ref_ev.details["reference_instance_id"])
             if not working or not reference:

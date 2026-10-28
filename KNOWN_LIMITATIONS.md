@@ -17,8 +17,9 @@ sealed bundle.
 
 | Item | Status | Why it matters |
 |---|---|---|
-| Reference candidate tier uses a fixed Jaccard token-overlap floor of 0.4 | PROVISIONAL, uncalibrated | A heavily reworded canon passage below that floor is not compared at all. The number is a guess. |
-| Ordinary channels are not stored at `NONE` strength for reference pairs | By design, but it has a cost | A disagreement found only by reference overlap reports `detected_channels: ("reference_overlap",)` — truthful, but it means no per-channel numbers are shown for that pair. |
+| Reference candidate tier Jaccard floor | HARDENED (0.58 + rare-token gate) | Raised from 0.4 after an unrelated technical negative control produced a large false `reference_disagreement` burden on shared academic language. Now requires Jaccard ≥ 0.58 **and** ≥ 2 shared tokens with DF ≤ 3 in the run. One real-corpus negative control has been exercised; broader calibration is still required. |
+| Reference disagreement escalation | HARDENED | `reference_difference` only becomes REFERENCE_DISAGREEMENT when an ordinary channel reaches MEDIUM+ **or** measured reference token-Jaccard clears the versioned `reference_overlap_min` gate. Weak reference-only overlap remains visible as context but stays ORDINARY. |
+| Reference-only overlap remains visible without correction authority | By design | Seed/reference context may still be recorded for inspection, but a weak overlap with no qualifying ordinary evidence does **not** create a `PROPOSED` correction suggestion. |
 | `apply_suggestion` writes a per-block `corrected_<instance>.md` | MINIMAL | It is not a document rewrite. There is no DOCX/PDF round-trip and no tracked changes. |
 | `EDITED` status exists but there is no editor | STUB | The GUI can mark a suggestion EDITED; it cannot yet capture edited replacement text. An EDITED suggestion applies the reference text as-is. |
 | Reference-to-reference conflicts | NOT SURFACED | Detected and marked `reference_to_reference`, then excluded from ordinary triage. There is no reference-conflict view. |
@@ -39,8 +40,9 @@ sealed bundle.
 
 ## Provisional and uncalibrated
 
-Every threshold in `core/config.py` is a guess. Nothing has been calibrated
-against a real corpus. In particular:
+Thresholds in `core/config.py` remain provisional. The 2026-08-11 repair was exercised
+against one unrelated real-corpus negative control and one known-parent lineage control,
+but that is not a representative calibration set. In particular:
 
 - Single-channel HIGH eligibility, corroboration rules, and pair aggregation are unvalidated.
 - Strength bands are computed from raw scores whose distributions nobody has measured.

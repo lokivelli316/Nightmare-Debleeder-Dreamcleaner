@@ -414,11 +414,16 @@ class ReferenceChannel(ChannelEngine):
             reference, working, ref_entry = source, target, s_ref
 
         exact = working.normalized_content == reference.normalized_content
+        working_tokens = set(working.normalized_content.split())
+        reference_tokens = set(reference.normalized_content.split())
+        token_union = working_tokens | reference_tokens
+        token_shared = working_tokens & reference_tokens
+        token_jaccard = len(token_shared) / len(token_union) if token_union else 0.0
         return EvidenceRecord(
             run_id=target.run_id,
             pair_id=self._pair_id(target, source),
             channel=self.channel,
-            raw_score=1.0 if exact else 0.5,
+            raw_score=1.0 if exact else token_jaccard,
             strength=StrengthBand.NONE,   # context is never strength
             confidence=ConfidenceBand.HIGH,
             details={
@@ -433,6 +438,8 @@ class ReferenceChannel(ChannelEngine):
                 "working_source_name": working.metadata.get("source_name", ""),
                 "working_ordinal": working.addr.ordinal,
                 "shared_seed": exact,
+                "token_jaccard": token_jaccard,
+                "shared_token_count": len(token_shared),
             },
             method_version=str(self.method_version),
             extraction_quality=ExtractionQuality.HIGH,

@@ -54,6 +54,10 @@ class Thresholds:
         "low": 0.4, "medium": 0.7, "high": 0.9
     })
     # lineage and seed are modifiers, not direct strength
+    # Reference gate (candidate funnel) — versioned here so calibration is visible
+    reference_overlap_min: float = 0.58
+    reference_rare_token_min: int = 2
+    reference_rare_df_max: int = 3
 
 
 @dataclass(frozen=True, slots=True)

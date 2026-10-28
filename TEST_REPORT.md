@@ -123,3 +123,63 @@ assertion. The doctrine had never been exercised.
 Nothing here is INDEPENDENTLY VERIFIED. Everything above is BUILDER VERIFIED at
 most: it was run by the same party that wrote the repair. See
 `KNOWN_LIMITATIONS.md` for what is deliberately absent.
+
+
+## 2026-08-11 false-fire regression repair
+
+Status ceiling: **BUILDER VERIFIED**. No human-device or independent verification claim.
+
+### Failure preservation
+
+The supplied false-fire package was applied to a clean `df96275` branch and tested before
+additional repair. The new three-test regression file first failed **3/3** on the baseline.
+After applying the supplied package unchanged, it still failed **2/3**:
+
+- weak reference-overlap still created a `PROPOSED` correction;
+- reference-gate values were declared in `Config.thresholds` but the candidate funnel still
+  used hard-coded class constants.
+
+The first full-suite run after integrating the missing authority/config wiring also exposed a
+public/private-boundary failure because private corpus identifiers had been copied into public
+core comments. The identifiers were removed; no runtime behavior changed.
+
+### Fresh automated result
+
+```text
+python -m pytest -q -rs
+55 passed, 10 skipped
+
+python -m compileall -q src tests
+exit=0
+
+new false-fire regressions
+3 passed
+
+existing reference-document gates
+13 passed
+```
+
+The ten skips remain the explicit deferred/cut gates already documented by the project; they
+are not counted as passes.
+
+### Real-corpus negative control
+
+An unrelated technical working/reference pair was run in both directions. Before the repair,
+each direction produced **2,256** proposed suggestions, including **1,931** suggestions whose
+only detected channel was `reference_overlap`. After the repair, each direction produced
+**46** suggestions, **0** reference-overlap-only suggestions, and **0** auto-applies. This is
+a reduction of about **98%** in the actionable suggestion burden while preserving the raw
+reference context for inspection.
+
+### Known-parent lineage control
+
+A synthesized technical document was compared with two declared parent references. The
+pre-repair build produced **2,201** suggestions, including **1,949** reference-overlap-only
+suggestions. The repaired build produced **58** suggestions and **0** reference-overlap-only
+suggestions. The retained suggestions were supported by ordinary evidence: **45 numeric**,
+**12 symbol**, and **1 numeric+symbol**; triage strength was **49 HIGH** and **9 MEDIUM**.
+Both declared parent references remained represented. Auto-apply remained **0**.
+
+This supports the narrow claim that the false-fire authority leak is repaired without simply
+turning off structured/numeric disagreement detection. Broader corpus calibration remains
+open.

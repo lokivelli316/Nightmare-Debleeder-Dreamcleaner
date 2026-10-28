@@ -118,9 +118,28 @@ class TriageEngine:
                 recommendation = Disposition.KEEP_SEEDED.value
                 max_strength = StrengthBand.NONE
             elif match_type == "reference_difference":
-                # A seam against declared canon. Nothing is suppressed.
-                classification = PairClassification.REFERENCE_DISAGREEMENT.value
-                reference_disagreement = True
+                # A seam against declared canon — but only escalate when there is
+                # actual ordinary-channel strength. Weak academic overlap against
+                # a reference must not become a PROPOSED suggestion (negative
+                # control: an unrelated-corpus run produced many
+                # false reference_disagreement hits on shared physics English).
+                ordinary_rank = 0
+                for ch, ev in by_channel.items():
+                    if ch == Channel.SEED or ev is None:
+                        continue
+                    ordinary_rank = max(ordinary_rank, STRENGTH_ORDER.get(ev.strength, 0))
+                ref_raw = float(getattr(ref_ev, "raw_score", 0.0) or 0.0)
+                # Escalate only if some non-reference channel reached MEDIUM+
+                # or the contextual reference overlap clears the versioned
+                # reference gate. ReferenceChannel raw_score is token Jaccard
+                # for differences (1.0 for exact matches, handled above).
+                near_copy_floor = float(self.config.thresholds.reference_overlap_min)
+                if ordinary_rank >= STRENGTH_ORDER[StrengthBand.MEDIUM] or ref_raw >= near_copy_floor:
+                    classification = PairClassification.REFERENCE_DISAGREEMENT.value
+                    reference_disagreement = True
+                else:
+                    classification = PairClassification.ORDINARY.value
+                    reference_disagreement = False
             elif match_type == "reference_to_reference":
                 classification = PairClassification.ORDINARY.value
 

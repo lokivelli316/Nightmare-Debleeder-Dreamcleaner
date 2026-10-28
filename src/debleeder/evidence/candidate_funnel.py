@@ -33,8 +33,16 @@ class CandidateFunnel:
     """Multi-stage candidate reduction — bounded queue, streaming friendly."""
 
     #: Jaccard token overlap above which a working block is compared against a
-    #: declared reference block. Provisional and uncalibrated.
-    REFERENCE_OVERLAP_MIN = 0.4
+    #: declared reference block. Raised after negative-control false-fire
+    #: (an unrelated-corpus control produced many reference_disagreement
+    #: hits on pure academic vocabulary). Still provisional — calibrate later.
+    REFERENCE_OVERLAP_MIN = 0.58
+
+    #: Minimum number of shared tokens that are rare in the current funnel
+    #: (appear in <= RARE_DF_MAX blocks). Generic academic English alone must
+    #: not open a reference pair.
+    REFERENCE_RARE_TOKEN_MIN = 2
+    RARE_DF_MAX = 3
 
     def __init__(self, config: Config, store: SQLiteStore,
                  reference_instances: set[str] | None = None):
@@ -47,6 +55,12 @@ class CandidateFunnel:
         self.reference_instances = set(reference_instances or ())
         self.profile = config.for_profile()
         self.queue_limit = self.profile.candidate_queue_limit
+        # The reference gate is versioned in Config.thresholds. Keep the class
+        # constants only as documented defaults; runtime behavior must honor the
+        # configured calibration values.
+        self.reference_overlap_min = float(config.thresholds.reference_overlap_min)
+        self.reference_rare_token_min = int(config.thresholds.reference_rare_token_min)
+        self.reference_rare_df_max = int(config.thresholds.reference_rare_df_max)
 
         # Stage 1: Exact numeric literal buckets
         self.numeric_buckets: dict[str, list[str]] = defaultdict(list)  # literal -> [cid]
@@ -128,10 +142,19 @@ class CandidateFunnel:
                     if emitted >= self.queue_limit:
                         return
 
-        # Priority 0b: every working block against every declared reference block
-        # with meaningful token overlap. Reference sets are small and declared, so
-        # this stays bounded.
+        # Priority 0b: working blocks against declared reference blocks.
+        # Hardened against single-author academic false-fire:
+        #   1) higher Jaccard floor
+        #   2) at least REFERENCE_RARE_TOKEN_MIN shared tokens that are rare
+        #      in this funnel (DF <= RARE_DF_MAX)
+        # Generic physics/academic English alone must not open a pair.
         if self.reference_instances:
+            # document frequency of tokens across all indexed blocks in this run
+            token_df: dict[str, int] = defaultdict(int)
+            for words in self._words.values():
+                for tok in words:
+                    token_df[tok] += 1
+
             working = [i for i in self._words if i not in self.reference_instances]
             for ref_id in sorted(self.reference_instances):
                 ref_words = self._words.get(ref_id, set())
@@ -141,15 +164,25 @@ class CandidateFunnel:
                     work_words = self._words.get(work_id, set())
                     if not work_words:
                         continue
-                    overlap = len(ref_words & work_words)
+                    shared = ref_words & work_words
                     union = len(ref_words | work_words)
-                    if union == 0 or overlap / union < self.REFERENCE_OVERLAP_MIN:
+                    if union == 0:
+                        continue
+                    jaccard = len(shared) / union
+                    if jaccard < self.reference_overlap_min:
+                        continue
+                    rare_shared = sum(
+                        1 for tok in shared if token_df.get(tok, 0) <= self.reference_rare_df_max
+                    )
+                    if rare_shared < self.reference_rare_token_min:
                         continue
                     pair = tuple(sorted([ref_id, work_id]))
                     if pair in seen_pairs:
                         continue
                     seen_pairs.add(pair)
-                    cp = self._make_pair(pair, [Channel.PHRASE], overlap / union)
+                    # rarity_score reflects how distinctive the shared rare tokens are
+                    rarity = rare_shared / max(1, len(shared))
+                    cp = self._make_pair(pair, [Channel.PHRASE], rarity)
                     if cp is None:
                         continue
                     yield cp
